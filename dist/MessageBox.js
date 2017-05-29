@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.SUGGESTED_EVALUATE = exports.DEFAULT_ESCAPE = exports.DEFAULT_INTERPOLATE = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -22,7 +23,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-// import template from 'lodash.template';
+// Default lodash templates regexs
+// https://regex101.com/r/ce27tA/5
+var DEFAULT_INTERPOLATE = exports.DEFAULT_INTERPOLATE = /{{{([^\{\}#][\s\S]+?)}}}/g;
+// https://regex101.com/r/8sRC8b/8
+var DEFAULT_ESCAPE = exports.DEFAULT_ESCAPE = /{{([^\{\}#][\s\S]+?)}}/g;
+// https://regex101.com/r/ndDqxg/4
+var SUGGESTED_EVALUATE = exports.SUGGESTED_EVALUATE = /{{#([^\{\}].*?)}}/g;
 
 var MessageBox = function () {
   function MessageBox() {
@@ -30,14 +37,20 @@ var MessageBox = function () {
         initialLanguage = _ref.initialLanguage,
         messages = _ref.messages,
         tracker = _ref.tracker,
-        interpolate = _ref.interpolate;
+        interpolate = _ref.interpolate,
+        evaluate = _ref.evaluate,
+        escape = _ref.escape;
 
     _classCallCheck(this, MessageBox);
 
     this.language = initialLanguage || MessageBox.language || 'en';
     this.messageList = messages || {};
-    this.interpolate = interpolate || MessageBox.interpolate || /{{([\s\S]+?)}}/g;
     if (tracker) this.trackerDep = new tracker.Dependency();
+
+    // Template options
+    this.interpolate = interpolate || MessageBox.interpolate || DEFAULT_INTERPOLATE;
+    this.evaluate = evaluate || MessageBox.evaluate;
+    this.escape = escape || MessageBox.escape || DEFAULT_ESCAPE;
   }
 
   _createClass(MessageBox, [{
@@ -94,7 +107,13 @@ var MessageBox = function () {
 
       if (message && (typeof message === 'undefined' ? 'undefined' : _typeof(message)) === 'object') message = message[genericName] || message._default; // eslint-disable-line no-underscore-dangle
 
-      if (typeof message === 'string') message = (0, _lodash2.default)(message, { interpolate: this.interpolate });
+      if (typeof message === 'string') {
+        message = (0, _lodash2.default)(message, {
+          interpolate: this.interpolate,
+          evaluate: this.evaluate,
+          escape: this.escape
+        });
+      }
 
       if (typeof message !== 'function') return fieldName + ' is invalid';
 
@@ -118,10 +137,15 @@ var MessageBox = function () {
       var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
           initialLanguage = _ref3.initialLanguage,
           messages = _ref3.messages,
-          interpolate = _ref3.interpolate;
+          interpolate = _ref3.interpolate,
+          evaluate = _ref3.evaluate,
+          escape = _ref3.escape;
 
       if (typeof initialLanguage === 'string') MessageBox.language = initialLanguage;
+
       if (interpolate instanceof RegExp) MessageBox.interpolate = interpolate;
+      if (evaluate instanceof RegExp) MessageBox.evaluate = evaluate;
+      if (escape instanceof RegExp) MessageBox.escape = escape;
 
       if (messages) {
         if (!MessageBox.messages) MessageBox.messages = {};
